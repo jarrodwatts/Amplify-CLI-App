@@ -3,7 +3,7 @@ import { API, graphqlOperation } from 'aws-amplify'
 import nanoid from 'nanoid'
 import produce from 'immer'
 
-import { ListTodosQuery, GetTodoListQuery } from '../src/API'
+import { ListTodosQuery, GetTodoListQuery } from '../src/API';
 import config from '../src/aws-exports'
 import {
   createTodo,
