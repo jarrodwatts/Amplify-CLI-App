@@ -1,6 +1,30 @@
 import React from "react";
 import { GetStaticProps } from "next";
-import Link from "next/link";
+import {
+  ChakraProvider,
+  Stack,
+  Avatar,
+  AvatarBadge,
+  Icon,
+  Flex,
+  Text,
+  Button,
+  Link,
+  Heading,
+  Image,
+  HStack,
+  Divider,
+  Box,
+  Container,
+  Center,
+  Square,
+} from "@chakra-ui/react";
+import { LinkIcon } from "@chakra-ui/icons";
+import { DarkModeSwitch } from "../components/DarkModeSwitch";
+import Header from "../components/Header";
+import Hero from "../components/Hero";
+import AirCard from "../components/AirCard";
+
 // We'll need to import the queries.ts file to fetch the todos
 import { listTodos } from "../graphql/queries";
 // We'll need to import the types of those GQL queries from API.ts - maybe?
@@ -40,13 +64,17 @@ const deleteTodo = async (todoId: String) => {
 function Index({ todos }: { todos: Todo[] }) {
   console.log("Todos:", todos);
   return (
-    <div>
-      {todos.map((todo) => (
-        <Link key={todo.id} href={`/todo/${todo.id}`}>
-          <a>{todo.name}</a>
-        </Link>
-      ))}
-    </div>
+    <ChakraProvider resetCSS>
+      <Container maxWidth="100%" backgroundColor="blackAlpha.100" pt={2} pb={2}>
+        <Container maxWidth="160ch" mt={2} mb={2}>
+          <Hero />
+        </Container>
+      </Container>
+      <Divider />
+      <Container maxWidth="160ch" mt={2} mb={2}>
+        <Hero />
+      </Container>
+    </ChakraProvider>
   );
 }
 
