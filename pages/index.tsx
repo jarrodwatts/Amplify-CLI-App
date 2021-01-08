@@ -1,177 +1,77 @@
-import { Reducer, useReducer, Dispatch } from 'react'
-import { API, graphqlOperation } from 'aws-amplify'
-import nanoid from 'nanoid'
-import produce from 'immer'
+import React from "react";
+import { GetStaticProps } from "next";
+import Link from "next/link";
+// We'll need to import the queries.ts file to fetch the todos
+import { listTodos } from "../src/graphql/queries";
+// We'll need to import the types of those GQL queries from API.ts - maybe?
+import { ListTodosQuery } from "../src/API";
+// We'll need to import Amplify, the API, and a graphqlOperation from aws amplify
+import Amplify, { API, graphqlOperation } from "aws-amplify";
+// Import our configuration file for AWS from local file
+import awsconfig from "../src/aws-exports";
+// Call .configure on the Amplify import with our imported local file.
+Amplify.configure(awsconfig);
 
-import { ListTodosQuery, GetTodoListQuery } from '../src/API';
-import config from '../src/aws-exports'
-import {
-  createTodo,
-  deleteTodo,
-  createTodoList,
-} from '../src/graphql/mutations'
-import { getTodoList } from '../src/graphql/queries'
-
-const MY_ID = nanoid()
-API.configure(config)
-
+// Create a Todo Type based on the auto generated ListTodosQuery.
+// We are ommitting the __typename and todoList value from the .items[0]
+// Where items is an array of items
+// We can say [0] because we don't need the values. we just need the types
 type Todo = Omit<
-  ListTodosQuery['listTodos']['items'][0],
-  '__typename' | 'todoList'
->
+  ListTodosQuery["listTodos"]["items"][0],
+  "__typename" | "todoList"
+>;
 
-type Props = {
-  todos: Todo[]
-}
+const createTodo = async (todo: Todo) => {
+  await API.graphql(graphqlOperation(createTodo, { input: todo }));
+};
 
-type State = {
-  todos: Todo[]
-  currentName: string
-}
-
-type Action =
-  | {
-      type: 'add-todo'
-      payload: Todo
-    }
-  | {
-      type: 'delete-todo'
-      payload: string
-    }
-  | {
-      type: 'reset-current'
-    }
-  | { type: 'set-current'; payload: string }
-
-const reducer: Reducer<State, Action> = (state, action) => {
-  switch (action.type) {
-    case 'add-todo': {
-      return produce(state, (draft) => {
-        draft.todos.push(action.payload)
-      })
-    }
-    case 'delete-todo': {
-      const index = state.todos.findIndex(({ id }) => action.payload === id)
-      if (index === -1) return state
-      return produce(state, (draft) => {
-        draft.todos.splice(index, 1)
-      })
-    }
-    case 'reset-current': {
-      return produce(state, (draft) => {
-        draft.currentName = ''
-      })
-    }
-    case 'set-current': {
-      return produce(state, (draft) => {
-        draft.currentName = action.payload
-      })
-    }
-    default: {
-      return state
-    }
-  }
-}
-
-const createToDo = async (dispatch: Dispatch<Action>, currentToDo) => {
-  const todo = {
-    id: nanoid(),
-    name: currentToDo,
-    createdAt: `${Date.now()}`,
-    completed: false,
-    todoTodoListId: 'global',
-    userId: MY_ID,
-  }
-  dispatch({ type: 'add-todo', payload: todo })
-  dispatch({ type: 'reset-current' })
-  try {
-    await API.graphql(graphqlOperation(createTodo, { input: todo }))
-  } catch (err) {
-    dispatch({ type: 'set-current', payload: todo.name })
-    console.warn('Error adding to do ', err)
-  }
-}
-const deleteToDo = async (dispatch: Dispatch<Action>, id: string) => {
-  dispatch({ type: 'delete-todo', payload: id })
-  try {
-    await API.graphql({
-      ...graphqlOperation(deleteTodo),
-      variables: { input: { id } },
+const updateTodo = async (todoId: String, todoName: String) => {
+  await API.graphql(
+    graphqlOperation(updateTodo, {
+      input: { id: todoId, name: todoName },
     })
-  } catch (err) {
-    console.warn('Error deleting to do ', err)
-  }
-}
-const App = (props: Props) => {
-  const [state, dispatch] = useReducer(reducer, {
-    todos: props.todos,
-    currentName: '',
-  })
+  );
+};
+
+const deleteTodo = async (todoId: String) => {
+  await API.graphql(graphqlOperation(deleteTodo, { input: { id: todoId } }));
+};
+
+function Index({ todos }: { todos: Todo[] }) {
+  console.log("Todos:", todos);
   return (
     <div>
-      <h3>Add a Todo</h3>
-      <form
-        onSubmit={(ev) => {
-          ev.preventDefault()
-          createToDo(dispatch, state.currentName)
-        }}
-      >
-        <input
-          value={state.currentName}
-          onChange={(e) => {
-            dispatch({ type: 'set-current', payload: e.target.value })
-          }}
-        />
-        <button type="submit">Create Todo</button>
-      </form>
-      <h3>Todos List</h3>
-      {state.todos.map((todo, index) => (
-        <p key={index}>
-          <a href={`/todo/${todo.id}`}>{todo.name}</a>
-          <button
-            onClick={() => {
-              deleteToDo(dispatch, todo.id)
-            }}
-          >
-            delete
-          </button>
-        </p>
+      {todos.map((todo) => (
+        <Link key={todo.id} href={`/todo/${todo.id}`}>
+          <a>{todo.name}</a>
+        </Link>
       ))}
     </div>
-  )
+  );
 }
 
-export const getStaticProps = async () => {
-  let result = (await API.graphql(
-    graphqlOperation(getTodoList, { id: 'global' })
-  )) as { data: GetTodoListQuery; errors: any[] }
+export const getStaticProps: GetStaticProps = async () => {
+  // Make a call to the graphQL API here to get all todos from a todolist
+  // The todo list will be 'global'
+  const result = (await API.graphql(graphqlOperation(listTodos))) as {
+    data: ListTodosQuery;
+    errors: any[];
+  };
 
-  if (result.errors) {
-    console.error('Failed to fetch todolist.', result.errors)
-    throw new Error(result.errors[0].message)
-  }
-  if (result.data.getTodoList !== null) {
+  // If there's no errors return the todos as an array of
+  if (!result.errors) {
     return {
       props: {
-        todos: result.data.getTodoList.todos.items,
+        todos: result.data.listTodos.items,
       },
-    }
+    };
   }
-
-  await API.graphql(
-    graphqlOperation(createTodoList, {
-      input: {
-        id: 'global',
-        createdAt: `${Date.now()}`,
-      },
-    })
-  )
 
   return {
     props: {
       todos: [],
     },
-  }
-}
+  };
+};
 
-export default App
+export default Index;
