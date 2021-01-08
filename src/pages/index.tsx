@@ -2,13 +2,13 @@ import React from "react";
 import { GetStaticProps } from "next";
 import Link from "next/link";
 // We'll need to import the queries.ts file to fetch the todos
-import { listTodos } from "../src/graphql/queries";
+import { listTodos } from "../graphql/queries";
 // We'll need to import the types of those GQL queries from API.ts - maybe?
-import { ListTodosQuery } from "../src/API";
+import { ListTodosQuery } from "../API";
 // We'll need to import Amplify, the API, and a graphqlOperation from aws amplify
 import Amplify, { API, graphqlOperation } from "aws-amplify";
 // Import our configuration file for AWS from local file
-import awsconfig from "../src/aws-exports";
+import awsconfig from "../aws-exports";
 // Call .configure on the Amplify import with our imported local file.
 Amplify.configure(awsconfig);
 
