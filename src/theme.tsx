@@ -1,21 +1,30 @@
-import { extendTheme } from "@chakra-ui/react";
-import { createBreakpoints } from "@chakra-ui/theme-tools";
+import { createMuiTheme } from "@material-ui/core/styles";
+import { red } from "@material-ui/core/colors";
 
-const fonts = { mono: `'Menlo', monospace` };
-
-const breakpoints = createBreakpoints({
-  sm: "40em",
-  md: "52em",
-  lg: "64em",
-  xl: "80em",
-});
-
-const theme = extendTheme({
-  colors: {
-    black: "#16161D",
+// Create a theme instance.
+const theme = createMuiTheme({
+  palette: {
+    common: { black: "rgba(0, 0, 0, 1)", white: "#fff" },
+    background: { paper: "#fff", default: "#fafafa" },
+    primary: {
+      main: "#2196f3",
+      contrastText: "rgba(45, 55, 72, 1)",
+    },
+    secondary: {
+      main: "#f50057",
+      contrastText: "rgba(45, 55, 72, 1)",
+    },
+    error: {
+      main: "#f44336",
+      contrastText: "rgba(0, 0, 0, 0.54)",
+    },
+    text: {
+      primary: "rgba(45, 55, 72, 1)",
+      secondary: "rgba(0, 0, 0, 0.54)",
+      disabled: "rgba(0, 0, 0, 0.38)",
+      hint: "rgba(0, 0, 0, 0.38)",
+    },
   },
-  fonts,
-  breakpoints,
 });
 
 export default theme;
